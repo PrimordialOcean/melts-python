@@ -1,6 +1,5 @@
 import pandas as pd
 import os
-import io
 
 # 計算用の関数
 # 質量(g)と密度(g/cc)から体積(m^3)を計算する
@@ -79,9 +78,18 @@ def read_df_grt(path):
     return df_grt
 
 def read_df_hbl(path):
-    list_col_hbl = [ "Index", "volHbl (m^3)" ]
+    list_col_hbl = [ "Index", "volHbl (m^3)", "SiHbl (apfu)" ]
     df_hbl = pd.read_csv(path+"hornblende.csv")
     df_hbl["volHbl (m^3)"] = calc_vol(df_hbl)
+    molsi = df_hbl["wt% SiO2"] / 60.084
+    molal = df_hbl["wt% Al2O3"] / 101.96
+    molfe = ( df_hbl["wt% FeO"] \
+    + ( 2 * 71.844 / 159.69 ) * df_hbl["wt% Fe2O3"] ) / 71.8464
+    molmg = df_hbl["wt% MgO"] / 40.3044
+    molca = df_hbl["wt% CaO"] / 56.0774
+    oxy_factor = 23 / ( 2 * molsi + 3 * molal + molfe + molmg + molca )
+    apfusi = oxy_factor * molsi
+    df_hbl["SiHbl (apfu)"] = apfusi
     df_hbl = df_hbl[ list_col_hbl ]
     return df_hbl
 
@@ -151,6 +159,7 @@ def calc_volume(df):
         # volPhase (m^3) から単位を"vol%"に変換する
         vol_ratio = x[:-6] + " (vol%)"
         df[vol_ratio] = 100 * df[x] / df_sum
+    df["volTotalPh (vol%)"] = 100 - df["volMelt (vol%)"]
     return df
 
 # 入力組成を抽出

@@ -1,0 +1,6 @@
+*.jpg
+*.csv
+img/
+plot_cntr/
+in/
+out/
